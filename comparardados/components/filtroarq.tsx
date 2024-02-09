@@ -1,41 +1,70 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 import {
-    Box,
-    Button,
-    Flex,
-    FormControl,
-    FormHelperText,
-    FormLabel,
-    HStack,
-    Input,
-    Radio,
-    RadioGroup,
-    Text
-  } from "@chakra-ui/react";
+  Box,
+  Button,
+  Checkbox,
+  Flex,
+  FormControl,
+  FormHelperText,
+  FormLabel,
+  HStack,
+  Input,
+  Radio,
+  RadioGroup,
+  Stack,
+  Text
+} from "@chakra-ui/react";
 
 function FiltroRadio() {
+  const [checkboxValues, setCheckboxValues] = useState({
+    data_base: true,
+    Fis: true,
+    with_date: true
+  });
+
+  const handleCheckboxChange = (event: any) => {
+    const { name, checked } = event.target;
+    setCheckboxValues({ ...checkboxValues, [name]: checked });
+  };
   return (
     <Flex border={'0.5px solid #808080'}
-        borderRadius={'4px'}
-        padding={'10px'}
-        maxW={'500px'}
+      borderRadius={'4px'}
+      padding={'10px'}
+      maxW={'500px'}
     >
-       
-       <FormControl as='fieldset'>
-          <FormLabel as='legend'>
+
+      <FormControl as='fieldset'>
+        <FormLabel as='legend'>
           Filter to organize the file
-          </FormLabel>
-          <RadioGroup defaultValue='Itachi'>
-            <HStack spacing='24px'>
-              <Radio value='Sasuke'>Data Base</Radio>
-              <Radio value='Nagato'>Fis</Radio>
-              <Radio value='Itachi'>With date</Radio>
-            </HStack>
-          </RadioGroup>
-          <FormHelperText>Select how you want to organize.</FormHelperText>
-        </FormControl>
-    </Flex>
+        </FormLabel>
+        <Stack>
+          <Checkbox colorScheme='green'
+            value='data_base'
+            checked={checkboxValues.data_base}
+            onChange={handleCheckboxChange}
+          >
+            Data Base
+          </Checkbox>
+          <Checkbox colorScheme='green'
+            value="Fis"
+            checked={checkboxValues.data_base}
+            onChange={handleCheckboxChange}
+            >
+            Fis
+          </Checkbox>
+          <Checkbox colorScheme='green'
+            value='with_date'
+            checked={checkboxValues.data_base}
+            onChange={handleCheckboxChange}
+          >
+            With Date
+          </Checkbox>
+        </Stack>
+
+        <FormHelperText>Select how you want to organize.</FormHelperText>
+      </FormControl>
+    </Flex >
   )
 }
 

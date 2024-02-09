@@ -6,13 +6,7 @@ import {
   Box,
   Button,
   Flex,
-  FormControl,
-  FormHelperText,
-  FormLabel,
-  HStack,
   Input,
-  Radio,
-  RadioGroup,
   Stack,
   Text
 } from "@chakra-ui/react";
@@ -22,7 +16,9 @@ import React, { useState } from 'react';
 
 export default function Home() {
 
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFile, setSelectedFile] = useState<File | null | any>(null);
+  const [keyword, setKeyword] = useState('');
+  const [searchResult, setSearchResult] = useState('');
 
   const handleFileChange = (event: any) => {
     // Obtém o primeiro arquivo da lista de arquivos selecionados
@@ -31,11 +27,28 @@ export default function Home() {
     setSelectedFile(file);
   };
 
+  const handleKeywordChange = (event: any) => {
+    setKeyword(event.target.value);
+  };
 
   const handleUpload = () => {
     if (selectedFile) {
-      // aqui manipulo a informação
       console.log("Arquivo selecionado:", selectedFile);
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const fileContent = reader.result as string;
+
+        // Verificar se o conteúdo do arquivo contém exatamente a palavra-chave
+        // const isKeywordPresent = fileContent.trim() === keyword.trim();
+        //setSearchResult(isKeywordPresent ? 'Palavra-chave encontrada!' : 'Palavra-chave não encontrada.');
+
+        // Verificar se o conteúdo do arquivo contém exatamente a palavra-chave
+        const isKeywordPresent = fileContent.includes("VWZ7Z2AN000195");
+        setSearchResult(isKeywordPresent ? 'Palavra-chave encontrada!' : 'Palavra-chave não encontrada.');
+        console.log("Resultado da busca pela palavra-chave:", isKeywordPresent);
+      };
+      reader.readAsText(selectedFile);
     } else {
       alert("Nenhum arquivo selecionado.");
     }
@@ -89,17 +102,15 @@ export default function Home() {
             Selecione um arquivo .txt:
           </Text>
           <Input type="file" onChange={handleFileChange} accept=".txt" mb={4} />
+          {/*<Input type="text" value={keyword} onChange={handleKeywordChange} 
+          placeholder="Digite a palavra-chave" />*/}
 
         </Box>
 
         {/* fim input que seleciona o arquivo*/}
 
 
-        <FiltroRadio />
 
-        <DateFilter />
-
-       
 
         <Stack direction='row' spacing={4} align='center'>
           <Button colorScheme='teal' variant='solid' onClick={handleUpload}>
@@ -111,6 +122,7 @@ export default function Home() {
         </Stack>
 
 
+        <Text>{searchResult}</Text>
       </Flex>
 
     </>
