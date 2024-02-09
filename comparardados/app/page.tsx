@@ -11,7 +11,7 @@ import {
   Text
 } from "@chakra-ui/react";
 
-
+import {DadosTeste} from './data/dados'
 import React, { useState } from 'react';
 
 export default function Home() {
@@ -39,14 +39,24 @@ export default function Home() {
       reader.onload = () => {
         const fileContent = reader.result as string;
 
-        // Verificar se o conteúdo do arquivo contém exatamente a palavra-chave
-        // const isKeywordPresent = fileContent.trim() === keyword.trim();
-        //setSearchResult(isKeywordPresent ? 'Palavra-chave encontrada!' : 'Palavra-chave não encontrada.');
+        let foundSerial = false; // Variável para armazenar se o número de série foi encontrado
 
-        // Verificar se o conteúdo do arquivo contém exatamente a palavra-chave
-        const isKeywordPresent = fileContent.includes("VWZ7Z2AN000195");
-        setSearchResult(isKeywordPresent ? 'Palavra-chave encontrada!' : 'Palavra-chave não encontrada.');
-        console.log("Resultado da busca pela palavra-chave:", isKeywordPresent);
+        // Iterar sobre os números de série na coleção de dados
+        DadosTeste.forEach(item => {
+          const serialNumberToFind = item.serial; // Obtém o número de série do item da coleção de dados
+          const isSerialPresent = fileContent.includes(serialNumberToFind);
+          if (isSerialPresent) {
+            foundSerial = true; // Define como true se o número de série for encontrado
+            console.log(`Número de série ${serialNumberToFind} encontrado no arquivo.`);
+            setSearchResult(`Número de série ${serialNumberToFind} encontrado no arquivo.`);
+          }
+        });
+
+        // Se o número de série não for encontrado
+        if (!foundSerial) {
+          setSearchResult('Nenhum número de série da coleção encontrado no arquivo.');
+          console.log('Nenhum número de série da coleção encontrado no arquivo.');
+        }
       };
       reader.readAsText(selectedFile);
     } else {
@@ -122,7 +132,7 @@ export default function Home() {
         </Stack>
 
 
-        <Text>{searchResult}</Text>
+        {searchResult &&<Text>{searchResult}</Text>}
       </Flex>
 
     </>
