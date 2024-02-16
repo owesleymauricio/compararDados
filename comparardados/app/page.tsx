@@ -8,103 +8,147 @@ import {
   Flex,
   Input,
   Stack,
-  Text
+  Spinner,
+  Text,
+  useDisclosure
 } from "@chakra-ui/react";
-
-import {DadosTeste} from './data/dados'
-import React, { useState } from 'react';
+import {DadosTeste} from './data/dados'; // Importa os dados do banco de dados
+import React, { useEffect, useState } from 'react';
+import jsPDF from 'jspdf'; // Importa a biblioteca jsPDF para geração de PDF
 
 export default function Home() {
+   // Estado para armazenar o arquivo selecionado
+  const [selectedFile, setSelectedFile] = useState<File | null | any>(null); 
+  // Estado para armazenar o resultado da pesquisa
+  const [searchResult, setSearchResult] = useState(''); 
+  // Estado para armazenar os números de série não encontrados
+  const [notFoundSerials, setNotFoundSerials] = useState<string[]>([]); 
+  // Estado para controlar o spinner de carregamento
+  const [loading, setLoading] = useState(false); 
+   // Estado para controlar a visibilidade do botão "Voltar ao topo"
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
-  const [selectedFile, setSelectedFile] = useState<File | null | any>(null);
-  const [keyword, setKeyword] = useState('');
-  const [searchResult, setSearchResult] = useState('');
 
+  /* Este efeito é usado para adicionar um event listener ao scroll da janela 
+  ** quando o componente é montado.
+  ** Ele chama a função handleScroll sempre que o evento de scroll ocorre.
+  ** O array vazio [] no final significa que este
+  ** efeito será executado apenas uma vez, após o componente ser montado.*/
+useEffect(() => {
+  window.addEventListener('scroll', handleScroll);
+  // Retorna uma função de limpeza para remover o event listener quando o componente for desmontado.
+  return () => window.removeEventListener('scroll', handleScroll);
+}, []);
+
+/* Esta função é chamada quando ocorre um evento de scroll.
+** Ela verifica a posição do scroll da janela (window.scrollY) e, se for maior que 300 pixels,
+** define o estado setShowBackToTop como true para mostrar o botão de voltar para o topo.
+** Caso contrário, define o estado como false para esconder o botão.*/
+const handleScroll = () => {
+  if (window.scrollY > 300) {
+    setShowBackToTop(true);
+  } else {
+    setShowBackToTop(false);
+  }
+};
+
+/* Esta função é chamada quando o usuário clica no botão "Voltar para o topo".
+** Ela utiliza o método scrollTo para rolar a janela para o topo da página,
+** com um efeito de rolagem suave definido pela opção behavior: "smooth".*/
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+};
+
+
+  // Função para lidar com a mudança no arquivo selecionado
   const handleFileChange = (event: any) => {
-    // Obtém o primeiro arquivo da lista de arquivos selecionados
     const file = event.target.files[0];
-    // Atualiza o estado com o arquivo selecionado
     setSelectedFile(file);
   };
 
-  const handleKeywordChange = (event: any) => {
-    setKeyword(event.target.value);
-  };
-
+  // Função para processar o upload do arquivo
   const handleUpload = () => {
     if (selectedFile) {
-      console.log("Arquivo selecionado:", selectedFile);
+      setLoading(true); // Ativa o spinner de carregamento
+
 
       const reader = new FileReader();
       reader.onload = () => {
         const fileContent = reader.result as string;
 
-        let foundSerial = false; // Variável para armazenar se o número de série foi encontrado
+        const notFoundSerialsTemp: string[] = [];
 
-        // Iterar sobre os números de série na coleção de dados
-        DadosTeste.forEach(item => {
-          const serialNumberToFind = item.serial; // Obtém o número de série do item da coleção de dados
-          const isSerialPresent = fileContent.includes(serialNumberToFind);
-          if (isSerialPresent) {
-            foundSerial = true; // Define como true se o número de série for encontrado
-            console.log(`Número de série ${serialNumberToFind} encontrado no arquivo.`);
-            setSearchResult(`Número de série ${serialNumberToFind} encontrado no arquivo.`);
+       /*estamos dividindo o conteúdo do arquivo .txt em linhas usando split('\n'),
+       ** depois percorrendo cada número de série no arquivo. Para cada número de 
+       ** série no arquivo, verificamos se ele está presente no banco de dados usando 
+       ** DadosTeste.some(). Se não estiver presente no banco de dados, adicionamos à 
+       ** lista notFoundSerials.*/ 
+        const serialsInFile = fileContent.split('\n');
+        serialsInFile.forEach(serial => {
+          // Verifica se o número de série não está presente no banco de dados
+          const isSerialPresentInDB = DadosTeste.some(item => item.serial === serial.trim());
+          if (!isSerialPresentInDB) {
+            notFoundSerialsTemp.push(serial.trim());
           }
         });
 
-        // Se o número de série não for encontrado
-        if (!foundSerial) {
-          setSearchResult('Nenhum número de série da coleção encontrado no arquivo.');
-          console.log('Nenhum número de série da coleção encontrado no arquivo.');
+        // Verifica se há números de série não encontrados
+        if (notFoundSerialsTemp.length === 0) {
+          setSearchResult(
+            'Todos os números de série do arquivo estão presentes no banco de dados.'
+            );
+            console.log(`
+            Número de série ${notFoundSerialsTemp}
+             encontrado no arquivo.${selectedFile}
+             `);
+        } else {
+          setSearchResult('');
+          setNotFoundSerials(notFoundSerialsTemp); // Atualiza o estado com os números de série não encontrados
         }
+
+        setLoading(false); // Desativa o spinner de carregamento
       };
-    
+
       reader.readAsText(selectedFile);
     } else {
       alert("Nenhum arquivo selecionado.");
     }
   };
 
+  // Função para lidar com o download do PDF
   const handleDownload = () => {
     if (selectedFile) {
-      // Cria um objeto URL para o arquivo
-      const fileURL = URL.createObjectURL(selectedFile);
+      const doc = new jsPDF(); // Cria um novo documento PDF
+      doc.text(searchResult, 10, 10); // Adiciona o resultado da pesquisa ao PDF
+      doc.text('Números de série não encontrados:', 10, 20); // Adiciona um título para os números de série não encontrados
 
-      // Cria um link temporário para realizar o download
-      const downloadLink = document.createElement("a");
-      downloadLink.href = fileURL;
-      downloadLink.download = selectedFile;
+      // Itera sobre os números de série não encontrados e os adiciona ao PDF
+      notFoundSerials.forEach((serial, index) => {
+        doc.text(`${index + 1}. ${serial}`, 10, 30 + (index * 10));
+      });
 
-      // Adiciona o link ao documento e clica nele para iniciar o download
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-
-      // Remove o link do documento
-      document.body.removeChild(downloadLink);
+      doc.save('serial_numbers.pdf'); // Salva o PDF com o nome especificado
     } else {
       alert("Nenhum arquivo para download.");
     }
   };
 
+  // Função para limpar a lista de números de série não encontrados
+  const clearNotFoundSerials = () => {
+    setNotFoundSerials([]);
+  };
 
   return (
     <>
       <Flex
-        // height="100vh" // Define a altura da tela inteira
-        // width={"100vw"}
-        // alignItems="center" // Centraliza verticalmente
-        //justifyContent="center" // Centraliza horizontalmente
         flexDirection={'column'}
         justify={'center'}
         px={4}
-
       >
-        {/* inicio input que seleciona o arquivo*/}
-        <Text
-          fontSize='50px'
-          color='#F0FFFF'
-          borderBottom={'2px '}
-        >
+        <Text fontSize='50px' color='#F0FFFF' borderBottom={'2px '}>
           RadioSafecode checker
         </Text>
 
@@ -113,29 +157,47 @@ export default function Home() {
             Selecione um arquivo .txt:
           </Text>
           <Input type="file" onChange={handleFileChange} accept=".txt" mb={4} />
-          {/*<Input type="text" value={keyword} onChange={handleKeywordChange} 
-          placeholder="Digite a palavra-chave" />*/}
-
         </Box>
-
-        {/* fim input que seleciona o arquivo*/}
-
-
-
 
         <Stack direction='row' spacing={4} align='center'>
           <Button colorScheme='teal' variant='solid' onClick={handleUpload}>
             Gerar
           </Button>
           <Button colorScheme='teal' variant='outline' onClick={handleDownload}>
-            Download
+            Download PDF
           </Button>
+          {notFoundSerials.length > 0 && ( // Renderiza o botão apenas se houver números de série não encontrados
+            <Button colorScheme='red' variant='outline' onClick={clearNotFoundSerials}>
+              Limpar lista
+            </Button>
+          )}
         </Stack>
 
-
-        {searchResult &&<Text>{searchResult}</Text>}
+        {loading ? (
+          <Flex justify="center" mt={4}>
+            <Spinner />
+          </Flex>
+        ) : (
+          <>
+            {notFoundSerials.length > 0 && (
+              <Box mt={4} style={{overflowX: 'auto'}}>
+                <Text fontSize="lg">Números de série não encontrados:</Text>
+                <ul>
+                  {notFoundSerials.map((serial, index) => (
+                    <li key={index}>{serial}</li>
+                  ))}
+                </ul>
+                {showBackToTop && (
+                  <Button onClick={scrollToTop} mt={4} size="sm">
+                    Voltar ao topo
+                  </Button>
+                )}
+              </Box>
+            )}
+          </>
+        )}
+         {searchResult &&<Text>{searchResult}</Text>}
       </Flex>
-
     </>
   )
 }
