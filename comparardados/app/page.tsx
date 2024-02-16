@@ -58,6 +58,7 @@ export default function Home() {
           console.log('Nenhum número de série da coleção encontrado no arquivo.');
         }
       };
+    
       reader.readAsText(selectedFile);
     } else {
       alert("Nenhum arquivo selecionado.");
