@@ -142,24 +142,24 @@ export default function Home() {
 
   return (
     < >
-      <Flex
-       bg={'black.50'}
-       flexDirection={'column'}
-        justify={'center'}
-        px={4}
-      >
-        <Text fontSize='50px' color='#F0FFFF' borderBottom={'2px '}>
+  <Flex
+    bg="black" 
+    color="white"
+    flexDirection="column"
+    justify="center"
+    px={4}
+  >        <Text fontSize='50px' color='#F0FFFF' borderBottom={'2px '}>
           RadioSafecode checker
         </Text>
 
-        <Box p={4} maxW={'300px'}>
+        <Box p={4} maxW={'600px'}>
           <Text fontSize="xl" mb={4}>
             Selecione um arquivo .txt:
           </Text>
-          <Input type="file" onChange={handleFileChange} accept=".txt" mb={4} />
+          <Input type="file" onChange={handleFileChange} accept=".txt" mt={2} p={1} mb={2} />
         </Box>
 
-        <Stack direction='row' spacing={4} align='center'>
+        <Stack direction='row' spacing={4} mb={30} align='center'>
           <Button colorScheme='teal' variant='solid' onClick={handleUpload}>
             Gerar
           </Button>
