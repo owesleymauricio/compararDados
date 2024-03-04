@@ -1,111 +1,99 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Button, Flex, Input, Stack, Spinner, Text } from "@chakra-ui/react";
+import jsPDF from 'jspdf'; // Importa a biblioteca jsPDF para geração de PDF
 import { DadosTeste } from './data/dados'; // Importa os dados do banco de dados
-import jsPDF from 'jspdf';// Importa a biblioteca jsPDF para geração de PDF
 
 export default function Home() {
-     // Estado para armazenar o arquivo selecionado
+  // Estados para armazenar o arquivo selecionado, o resultado da pesquisa,
+  // os números de série não encontrados, o estado de carregamento e a visibilidade do botão "Voltar ao topo"
   const [selectedFile, setSelectedFile] = useState(null);
-    // Estado para armazenar o resultado da pesquisa
   const [searchResult, setSearchResult] = useState('');
-    // Estado para armazenar os números de série não encontrados
   const [notFoundSerials, setNotFoundSerials] = useState([]);
-    // Estado para controlar o spinner de carregamento
   const [loading, setLoading] = useState(false);
-     // Estado para controlar a visibilidade do botão "Voltar ao topo"
   const [showBackToTop, setShowBackToTop] = useState(false);
 
-    /* Este efeito é usado para adicionar um event listener ao scroll da janela 
-  ** quando o componente é montado.
-  ** Ele chama a função handleScroll sempre que o evento de scroll ocorre.
-  ** O array vazio [] no final significa que este
-  ** efeito será executado apenas uma vez, após o componente ser montado.*/
+  // Função para ordenar a matriz usando o algoritmo quicksort
+  function quicksort(array) {
+    if (array.length <= 1) return array;
+    const pivot = array[0].substring(Ninicial, Nfinal);
+    const head = array.filter(n => n.substring(Ninicial, Nfinal) < pivot);
+    const equal = array.filter(n => n.substring(Ninicial, Nfinal) === pivot);
+    const tail = array.filter(n => n.substring(Ninicial, Nfinal) > pivot);
+    return quicksort(head).concat(equal).concat(quicksort(tail));
+  }
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowBackToTop(window.scrollY > 300);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-     // Retorna uma função de limpeza para remover o event listener quando o componente for desmontado.
-
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  /* Esta função é chamada quando o usuário clica no botão "Voltar para o topo".
-** Ela utiliza o método scrollTo para rolar a janela para o topo da página,
-** com um efeito de rolagem suave definido pela opção behavior: "smooth".*/
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  
-/* Esta função é chamada quando ocorre um evento de scroll.
-** Ela verifica a posição do scroll da janela (window.scrollY) e, se for maior que 300 pixels,
-** define o estado setShowBackToTop como true para mostrar o botão de voltar para o topo.
-** Caso contrário, define o estado como false para esconder o botão.*/
+  // Função para realizar a busca binária em uma matriz ordenada
+  function binarySearch(sortedArray, target) {
+    let left = 0;
+    let right = sortedArray.length - 1;
+    while (left <= right) {
+      const mid = Math.floor((left + right) / 2);
+      const element = sortedArray[mid];
+      const substring = element.substring(Ninicial, Nfinal);
+      if (substring === target) {
+        return mid; // Elemento encontrado, retorna o índice
+      } else if (substring < target) {
+        left = mid + 1; // Busca na metade direita
+      } else {
+        right = mid - 1; // Busca na metade esquerda
+      }
+    }
+    return -1; // Elemento não encontrado
+  }
 
   // Função para lidar com a mudança no arquivo selecionado
-
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
     setSelectedFile(file || null);
   };
-  // Função para processar o upload do arquivo
 
+  // Função para processar o upload do arquivo
   const handleUpload = () => {
     if (!selectedFile) {
       alert("Nenhum arquivo selecionado.");
       return;
     }
 
-    setLoading(true);// Ativa o spinner de carregamento
+    setLoading(true); // Ativa o spinner de carregamento
     const reader = new FileReader();
     reader.onload = () => {
       const fileContent = reader.result;
       const notFoundSerialsTemp = [];
 
-        /*estamos dividindo o conteúdo do arquivo .txt em linhas usando split('\n'),
-       ** depois percorrendo cada número de série no arquivo. Para cada número de 
-       ** série no arquivo, verificamos se ele está presente no banco de dados usando 
-       ** DadosTeste.some(). Se não estiver presente no banco de dados, adicionamos à 
-       ** lista notFoundSerials.*/ 
+      // Estamos dividindo o conteúdo do arquivo .txt em linhas usando split('\n'),
+      // depois percorrendo cada número de série no arquivo.
       const serialsInFile = fileContent.split('\n');
       serialsInFile.forEach(serial => {
         // Verifica se o número de série não está presente no banco de dados
-
         if (!DadosTeste.some(item => item.serial === serial.trim())) {
           notFoundSerialsTemp.push(serial.trim());
         }
       });
 
       // Verifica se há números de série não encontrados
-
       if (notFoundSerialsTemp.length === 0) {
         setSearchResult('Todos os números de série do arquivo estão presentes no banco de dados.');
       } else {
         setSearchResult('');
-        setNotFoundSerials(notFoundSerialsTemp);// Atualiza o estado com os números de série não encontrados
+        setNotFoundSerials(notFoundSerialsTemp); // Atualiza o estado com os números de série não encontrados
       }
 
-      setLoading(false);// Desativa o spinner de carregamento
-
+      setLoading(false); // Desativa o spinner de carregamento
     };
 
     reader.readAsText(selectedFile);
   };
-  // Função para lidar com o download do PDF
 
+  // Função para lidar com o download do PDF
   const handleDownload = () => {
     if (!selectedFile) {
       alert("Nenhum arquivo para download.");
       return;
     }
 
-    const doc = new jsPDF();// Cria um novo documento PDF
+    const doc = new jsPDF(); // Cria um novo documento PDF
     let pageNumber = 1;
     let yPosition = 10;
 
