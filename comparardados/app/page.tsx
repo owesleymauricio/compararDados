@@ -3,7 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Flex, Input, Stack, Spinner, Text } from "@chakra-ui/react";
 import jsPDF from 'jspdf'; // Importa a biblioteca jsPDF para geração de PDF
-import { DadosTeste } from './data/dados'; // Importa os dados do banco de dados
+import { read, utils, writeFile } from 'xlsx';
+import apiCuritiba from './api/Curitiba.api'
+import apiAnchieta from './api/Anchieta.api'
+import apiTaubate from './api/Taubate.api'
+
 
 export default function Home() {
   // Estados para armazenar o arquivo selecionado, o resultado da pesquisa,
@@ -14,80 +18,14 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
 
-  // Função para ordenar a matriz usando o algoritmo quicksort
-  function quicksort(array) {
-    if (array.length <= 1) return array;
-    const pivot = array[0].substring(Ninicial, Nfinal);
-    const head = array.filter(n => n.substring(Ninicial, Nfinal) < pivot);
-    const equal = array.filter(n => n.substring(Ninicial, Nfinal) === pivot);
-    const tail = array.filter(n => n.substring(Ninicial, Nfinal) > pivot);
-    return quicksort(head).concat(equal).concat(quicksort(tail));
-  }
 
-  // Função para realizar a busca binária em uma matriz ordenada
-  function binarySearch(sortedArray, target) {
-    let left = 0;
-    let right = sortedArray.length - 1;
-    while (left <= right) {
-      const mid = Math.floor((left + right) / 2);
-      const element = sortedArray[mid];
-      const substring = element.substring(Ninicial, Nfinal);
-      if (substring === target) {
-        return mid; // Elemento encontrado, retorna o índice
-      } else if (substring < target) {
-        left = mid + 1; // Busca na metade direita
-      } else {
-        right = mid - 1; // Busca na metade esquerda
-      }
-    }
-    return -1; // Elemento não encontrado
-  }
-
-  // Função para lidar com a mudança no arquivo selecionado
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
     setSelectedFile(file || null);
   };
-
-  // Função para processar o upload do arquivo
-  const handleUpload = () => {
-    if (!selectedFile) {
-      alert("Nenhum arquivo selecionado.");
-      return;
-    }
-
-    setLoading(true); // Ativa o spinner de carregamento
-    const reader = new FileReader();
-    reader.onload = () => {
-      const fileContent = reader.result;
-      const notFoundSerialsTemp = [];
-
-      // Estamos dividindo o conteúdo do arquivo .txt em linhas usando split('\n'),
-      // depois percorrendo cada número de série no arquivo.
-      const serialsInFile = fileContent.split('\n');
-      serialsInFile.forEach(serial => {
-        // Verifica se o número de série não está presente no banco de dados
-        if (!DadosTeste.some(item => item.serial === serial.trim())) {
-          notFoundSerialsTemp.push(serial.trim());
-        }
-      });
-
-      // Verifica se há números de série não encontrados
-      if (notFoundSerialsTemp.length === 0) {
-        setSearchResult('Todos os números de série do arquivo estão presentes no banco de dados.');
-      } else {
-        setSearchResult('');
-        setNotFoundSerials(notFoundSerialsTemp); // Atualiza o estado com os números de série não encontrados
-      }
-
-      setLoading(false); // Desativa o spinner de carregamento
-    };
-
-    reader.readAsText(selectedFile);
-  };
-
-  // Função para lidar com o download do PDF
-  const handleDownload = () => {
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //Download em PDF
+  const handleDownloadPDF = () => {
     if (!selectedFile) {
       alert("Nenhum arquivo para download.");
       return;
@@ -122,21 +60,77 @@ export default function Home() {
     doc.save('serial_numbers.pdf');// Salva o PDF com o nome especificado
   };
 
-    // Função para limpar a lista de números de série não encontrados
+  /*Download em XLSX
 
-  const clearNotFoundSerials = () => {
-    setNotFoundSerials([]);
-  };
+    const exportFile = useCallback(() => {
+ generate worksheet from state 
+      const ws = utils.json_to_sheet(pres);
+  create workbook and append worksheet 
+      const wb = utils.book_new();
+      utils.book_append_sheet(wb, ws, "Data");
+       export to XLSX 
+      writeFile(wb, "serial_numbers.xlsx");
+    }, [pres]);
+
+
+  */
+ ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //lê o arquivo
+  const reader = selectedFile.text();
+  reader.onload = () => {
+    const fileContent = reader;
+    const notFoundSerials = [];
+
+    //separa o arquivo em linhas
+    const serialsInFile = fileContent.split('\n');
+
+    //para cada  linha ele vai fazer a busca binária
+    for (let i = 0; i < serialsInFile.length; i++) {
+      //pega os comandos (daria de fazer um triger no próprio banco pra não deixar a lógica tão exposta aqui no código)
+
+      let queryA = "db2 select * from radio_safecode where radio_vin in (" + serialsInFile[i] + ")";
+      let queryT = "db2 select * from radio_safecode where radio_vin in (" + serialsInFile[i] + ")";
+      let queryC = "db2 select * from radio_safecode where radio_vin in (" + serialsInFile[i] + ")";
+
+      //faz a consulta no banco de dados
+      let resultA = apiAnchieta.query(queryA);
+      let resultB = apiTaubate.query(queryT);
+      let resultC = apiCuritiba.query(queryC);
+
+      //se nos três bancos de dados der 'null', adiciona no pdf ou xml
+      if (resultA === null) {
+        if (resultB === null) {
+          if (resultC === null) {
+            notFoundSerials[i] = serialsInFile[i];
+          }
+        }
+      }
+
+      if (notFoundSerials.length === 0) {
+        setSearchResult('Todos os números de série do arquivo estão presentes no banco de dados.');
+      } else {
+        setSearchResult('');
+        setNotFoundSerials(notFoundSerials); // Atualiza o estado com os números de série não encontrados
+      }
+
+      setLoading(false); // Desativa o spinner de carregamento
+    }
+  }
+
+
+
+
+
 
   return (
     < >
-  <Flex
-    bg="black" 
-    color="white"
-    flexDirection="column"
-    justify="center"
-    px={4}
-  >        <Text fontSize='50px' color='#F0FFFF' borderBottom={'2px '}>
+      <Flex
+        bg="black"
+        color="white"
+        flexDirection="column"
+        justify="center"
+        px={4}
+      >        <Text fontSize='50px' color='#F0FFFF' borderBottom={'2px '}>
           RadioSafecode checker
         </Text>
 
@@ -151,8 +145,11 @@ export default function Home() {
           <Button colorScheme='teal' variant='solid' onClick={handleUpload}>
             Gerar
           </Button>
-          <Button colorScheme='teal' variant='outline' onClick={handleDownload}>
+          <Button colorScheme='teal' variant='outline' onClick={handleDownloadPDF}>
             Download PDF
+          </Button>
+          <Button colorScheme='teal' variant='outline' onClick={handleDownloadXLSX}>
+            Download XLSX
           </Button>
           {notFoundSerials.length > 0 && (
             <Button colorScheme='red' variant='outline' onClick={clearNotFoundSerials}>
@@ -168,7 +165,7 @@ export default function Home() {
         ) : (
           <>
             {notFoundSerials.length > 0 && (
-              <Box mt={4} style={{overflowX: 'auto'}}>
+              <Box mt={4} style={{ overflowX: 'auto' }}>
                 <Text fontSize="lg">Números de série não encontrados:</Text>
                 <ul>
                   {notFoundSerials.map((serial, index) => (
@@ -184,7 +181,7 @@ export default function Home() {
             )}
           </>
         )}
-         {searchResult &&<Text>{searchResult}</Text>}
+        {searchResult && <Text>{searchResult}</Text>}
       </Flex>
     </>
   )
