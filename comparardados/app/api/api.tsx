@@ -7,6 +7,19 @@ const sqlz = new Sequelize('bancos_radios', 'postgres', '123456', {
 });
 
 
+// ao possuir informações acerca dos bancos de dados, descomentar essas linhas e colocar aqui
+// lembrar que, será necessário fazer uma pesquisa em todos em todas as lógicas. 
+/*
+const db2 = new Sequelize('bancos_radios', 'postgres', '123456', {
+  host: 'localhost',
+  dialect: 'postgres'
+});
+
+
+const db3 = new Sequelize('bancos_radios', 'postgres', '123456', {
+  host: 'localhost',
+  dialect: 'postgres'
+}); */
 sequelize
   .authenticate()
   .then(() => {
