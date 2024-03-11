@@ -4,24 +4,25 @@ import { useState, useEffect } from 'react';
 import { Box, Button, Flex, Input, Stack, Spinner, Text } from "@chakra-ui/react";
 import { DadosTeste } from './data/dados'; // Importa os dados do banco de dados
 import jsPDF from 'jspdf';// Importa a biblioteca jsPDF para geração de PDF
+import * as XLSX from 'xlsx';
 
 export default function Home() {
-     // Estado para armazenar o arquivo selecionado
+  // Estado para armazenar o arquivo selecionado
   const [selectedFile, setSelectedFile] = useState(null);
-    // Estado para armazenar o resultado da pesquisa
+  // Estado para armazenar o resultado da pesquisa
   const [searchResult, setSearchResult] = useState('');
-    // Estado para armazenar os números de série não encontrados
+  // Estado para armazenar os números de série não encontrados
   const [notFoundSerials, setNotFoundSerials] = useState([]);
-    // Estado para controlar o spinner de carregamento
+  // Estado para controlar o spinner de carregamento
   const [loading, setLoading] = useState(false);
-     // Estado para controlar a visibilidade do botão "Voltar ao topo"
+  // Estado para controlar a visibilidade do botão "Voltar ao topo"
   const [showBackToTop, setShowBackToTop] = useState(false);
 
-    /* Este efeito é usado para adicionar um event listener ao scroll da janela 
-  ** quando o componente é montado.
-  ** Ele chama a função handleScroll sempre que o evento de scroll ocorre.
-  ** O array vazio [] no final significa que este
-  ** efeito será executado apenas uma vez, após o componente ser montado.*/
+  /* Este efeito é usado para adicionar um event listener ao scroll da janela 
+** quando o componente é montado.
+** Ele chama a função handleScroll sempre que o evento de scroll ocorre.
+** O array vazio [] no final significa que este
+** efeito será executado apenas uma vez, após o componente ser montado.*/
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,7 +30,7 @@ export default function Home() {
     };
 
     window.addEventListener('scroll', handleScroll);
-     // Retorna uma função de limpeza para remover o event listener quando o componente for desmontado.
+    // Retorna uma função de limpeza para remover o event listener quando o componente for desmontado.
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -42,11 +43,11 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  
-/* Esta função é chamada quando ocorre um evento de scroll.
-** Ela verifica a posição do scroll da janela (window.scrollY) e, se for maior que 300 pixels,
-** define o estado setShowBackToTop como true para mostrar o botão de voltar para o topo.
-** Caso contrário, define o estado como false para esconder o botão.*/
+
+  /* Esta função é chamada quando ocorre um evento de scroll.
+  ** Ela verifica a posição do scroll da janela (window.scrollY) e, se for maior que 300 pixels,
+  ** define o estado setShowBackToTop como true para mostrar o botão de voltar para o topo.
+  ** Caso contrário, define o estado como false para esconder o botão.*/
 
   // Função para lidar com a mudança no arquivo selecionado
 
@@ -68,11 +69,11 @@ export default function Home() {
       const fileContent = reader.result;
       const notFoundSerialsTemp = [];
 
-        /*estamos dividindo o conteúdo do arquivo .txt em linhas usando split('\n'),
-       ** depois percorrendo cada número de série no arquivo. Para cada número de 
-       ** série no arquivo, verificamos se ele está presente no banco de dados usando 
-       ** DadosTeste.some(). Se não estiver presente no banco de dados, adicionamos à 
-       ** lista notFoundSerials.*/ 
+      /*estamos dividindo o conteúdo do arquivo .txt em linhas usando split('\n'),
+     ** depois percorrendo cada número de série no arquivo. Para cada número de 
+     ** série no arquivo, verificamos se ele está presente no banco de dados usando 
+     ** DadosTeste.some(). Se não estiver presente no banco de dados, adicionamos à 
+     ** lista notFoundSerials.*/
       const serialsInFile = fileContent.split('\n');
       serialsInFile.forEach(serial => {
         // Verifica se o número de série não está presente no banco de dados
@@ -99,7 +100,7 @@ export default function Home() {
   };
   // Função para lidar com o download do PDF
 
-  const handleDownload = () => {
+  const handleDownloadPDF = () => {
     if (!selectedFile) {
       alert("Nenhum arquivo para download.");
       return;
@@ -134,21 +135,39 @@ export default function Home() {
     doc.save('serial_numbers.pdf');// Salva o PDF com o nome especificado
   };
 
-    // Função para limpar a lista de números de série não encontrados
+  // Função para limpar a lista de números de série não encontrados
 
   const clearNotFoundSerials = () => {
     setNotFoundSerials([]);
   };
 
+  const handleDownloadExcel = () => {
+    if (!selectedFile) {
+      alert("Nenhum arquivo para download.");
+      return;
+    }
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([["Números de série não encontrados"]]);
+
+    notFoundSerials.forEach((serial, index) => {
+      XLSX.utils.sheet_add_aoa(ws, [[serial]], { origin: -1 });
+    });
+
+    XLSX.utils.book_append_sheet(wb, ws, "Números de Série");
+
+    XLSX.writeFile(wb, 'serial_numbers.xlsx');
+  };
+
   return (
     < >
-  <Flex
-    bg="black" 
-    color="white"
-    flexDirection="column"
-    justify="center"
-    px={4}
-  >        <Text fontSize='50px' color='#F0FFFF' borderBottom={'2px '}>
+      <Flex
+        bg="black"
+        color="white"
+        flexDirection="column"
+        justify="center"
+        px={4}
+      >        <Text fontSize='50px' color='#F0FFFF' borderBottom={'2px '}>
           RadioSafecode checker
         </Text>
 
@@ -163,9 +182,13 @@ export default function Home() {
           <Button colorScheme='teal' variant='solid' onClick={handleUpload}>
             Gerar
           </Button>
-          <Button colorScheme='teal' variant='outline' onClick={handleDownload}>
+          <Button colorScheme='teal' variant='outline' onClick={handleDownloadPDF}>
             Download PDF
           </Button>
+          <Button colorScheme='teal' variant='outline' onClick={handleDownloadExcel}>
+            Download Planilha
+          </Button>
+
           {notFoundSerials.length > 0 && (
             <Button colorScheme='red' variant='outline' onClick={clearNotFoundSerials}>
               Limpar lista
@@ -180,7 +203,7 @@ export default function Home() {
         ) : (
           <>
             {notFoundSerials.length > 0 && (
-              <Box mt={4} style={{overflowX: 'auto'}}>
+              <Box mt={4} style={{ overflowX: 'auto' }}>
                 <Text fontSize="lg">Números de série não encontrados:</Text>
                 <ul>
                   {notFoundSerials.map((serial, index) => (
@@ -196,7 +219,7 @@ export default function Home() {
             )}
           </>
         )}
-         {searchResult &&<Text>{searchResult}</Text>}
+        {searchResult && <Text>{searchResult}</Text>}
       </Flex>
     </>
   )
