@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Flex, Input, Stack, Spinner, Text } from "@chakra-ui/react";
 import jsPDF from 'jspdf'; // Importa a biblioteca jsPDF para geração de PDF
-import { DadosTeste } from './data/dados'; // Importa os dados do banco de dados
-import apiCuritiba from './api/Curitiba.api'
-import apiAnchieta from './api/Anchieta.api'
-import apiTaubate from './api/Taubate.api'
+import apiCuritiba from '../app/api/Curitiba.api'
+import apiAnchieta from '../app/api/Anchieta.api'
+import apiTaubate from '../app/api/Taubate.api'
+import * as XLSX from 'xlsx';
 
 export default function Home() {
   // Estados para armazenar o arquivo selecionado, o resultado da pesquisa,
@@ -19,6 +19,7 @@ export default function Home() {
 
   // Função para ordenar a matriz usando o algoritmo quicksort
   function quicksort(array) {
+    
     if (array.length <= 1) return array;
     const pivot = array[0].substring(Ninicial, Nfinal);
     const head = array.filter(n => n.substring(Ninicial, Nfinal) < pivot);
@@ -31,6 +32,7 @@ export default function Home() {
   function binarySearch(sortedArray, target) {
     let left = 0;
     let right = sortedArray.length - 1;
+
     while (left <= right) {
       const mid = Math.floor((left + right) / 2);
       const element = sortedArray[mid];
@@ -62,10 +64,10 @@ export default function Home() {
     setLoading(true); // Ativa o spinner de carregamento
 
 
-      const reader = selectedFile.text();
-      reader.onload = () => {
-        const fileContent = reader;
-        const notFoundSerials = [];
+    const reader = selectedFile.text();
+    reader.onload = () => {
+      const fileContent = reader;
+      const notFoundSerials = [];
 
       //pega os comandos (daria de fazer um triger no próprio banco pra não deixar a lógica tão exposta aqui no código)
 
@@ -86,15 +88,20 @@ export default function Home() {
       let p = 0;
       let t = 0;
       serialsInFile.forEach(serial => {
-        // Verifica se o número de série não está presente no banco de dados
 
-        let resultAnchieta = binarySearch(resultA, serial)
-  
+        // Verifica se o número de série não está presente no banco de dados de Anchieta
+        //Se não estiver, dai verifica em Taubaté e no último caso em Curitiba
+        let retultAQ = quicksort(resultA)
+        let resultAnchieta = binarySearch(retultAQ, serial)
+
         if (resultAnchieta === null) {
-          let resultTaubate = binarySearch(resultB, serial);
-  
+          let retultBQ = quicksort(resultB)
+          let resultTaubate = binarySearch(retultBQ, serial);
+
           if (resultTaubate === null) {
-            let resultCuritiba = binarySearch(resultC, serial);
+            let retultCQ = quicksort(resultC)
+
+            let resultCuritiba = binarySearch(retultCQ, serial);
 
             if (resultCuritiba === null) {
 
@@ -104,16 +111,6 @@ export default function Home() {
           }
         }
         p += 1;
-
-        /*        if (!DadosTeste.some(item => item.serial === serial.trim())) {
-                  if(!DadosTeste.some(item => item.serial === serial.trim())){
-                    if(!DadosTeste.some(item => item.serial === serial.trim())){
-                      notFoundSerialsTemp.push(serial.trim());
-        
-                    }
-                  }
-                }
-        */
       });
 
       // Verifica se há números de série não encontrados
@@ -131,7 +128,7 @@ export default function Home() {
   };
 
   // Função para lidar com o download do PDF
-  const handleDownload = () => {
+  const handleDownloadPDF = () => {
     if (!selectedFile) {
       alert("Nenhum arquivo para download.");
       return;
@@ -172,6 +169,24 @@ export default function Home() {
     setNotFoundSerials([]);
   };
 
+  const handleDownloadExcel = () => {
+    if (!selectedFile) {
+      alert("Nenhum arquivo para download.");
+      return;
+    }
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([["Números de série não encontrados"]]);
+
+    notFoundSerials.forEach((serial, index) => {
+      XLSX.utils.sheet_add_aoa(ws, [[serial]], { origin: -1 });
+    });
+
+    XLSX.utils.book_append_sheet(wb, ws, "Números de Série");
+
+    XLSX.writeFile(wb, 'serial_numbers.xlsx');
+  };
+
   return (
     < >
       <Flex
@@ -195,8 +210,11 @@ export default function Home() {
           <Button colorScheme='teal' variant='solid' onClick={handleUpload}>
             Gerar
           </Button>
-          <Button colorScheme='teal' variant='outline' onClick={handleDownload}>
+          <Button colorScheme='teal' variant='outline' onClick={handleDownloadPDF}>
             Download PDF
+          </Button>
+          <Button colorScheme='teal' variant='outline' onClick={handleDownloadExcel}>
+            Download Planilha
           </Button>
           {notFoundSerials.length > 0 && (
             <Button colorScheme='red' variant='outline' onClick={clearNotFoundSerials}>
