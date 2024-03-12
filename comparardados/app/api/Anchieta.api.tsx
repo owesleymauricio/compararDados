@@ -1,5 +1,5 @@
 
-const Sequelize = require('sequelize');
+const sequelize = require('sequelize');
 
 const dba = new Sequelize('bancos_radios', 'postgres', '123456', {
   host: 'localhost',
@@ -7,7 +7,7 @@ const dba = new Sequelize('bancos_radios', 'postgres', '123456', {
 });
 
 
-sequelize
+dba
   .authenticate()
   .then(() => {
     console.log('Conexão com o banco de dados estabelecida com sucesso.');

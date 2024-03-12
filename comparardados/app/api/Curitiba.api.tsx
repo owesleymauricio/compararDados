@@ -7,7 +7,7 @@ const DBC = new Sequelize('bancos_radios', 'postgres', '123456', {
 });
 
 
-sequelize
+DBC
   .authenticate()
   .then(() => {
     console.log('Conexão com o banco de dados estabelecida com sucesso.');
