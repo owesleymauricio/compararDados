@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Box, Button, Flex, Input, Stack, Spinner, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Input, Stack, Spinner, Text, SimpleGrid } from "@chakra-ui/react";
 import { DadosTeste } from './data/dados'; // Importa os dados do banco de dados
 import jsPDF from 'jspdf';// Importa a biblioteca jsPDF para geração de PDF
 import * as XLSX from 'xlsx';
@@ -51,7 +51,7 @@ export default function Home() {
 
   // Função para lidar com a mudança no arquivo selecionado
 
-  const handleFileChange = (event) => {
+  const handleFileChange = (event: any) => {
     const file = event.target.files?.[0];
     setSelectedFile(file || null);
   };
@@ -66,8 +66,8 @@ export default function Home() {
     setLoading(true);// Ativa o spinner de carregamento
     const reader = new FileReader();
     reader.onload = () => {
-      const fileContent = reader.result;
-      const notFoundSerialsTemp = [];
+      const fileContent: any = reader.result;
+      const notFoundSerialsTemp: any = [];
 
       /*estamos dividindo o conteúdo do arquivo .txt em linhas usando split('\n'),
      ** depois percorrendo cada número de série no arquivo. Para cada número de 
@@ -75,7 +75,7 @@ export default function Home() {
      ** DadosTeste.some(). Se não estiver presente no banco de dados, adicionamos à 
      ** lista notFoundSerials.*/
       const serialsInFile = fileContent.split('\n');
-      serialsInFile.forEach(serial => {
+      serialsInFile.forEach((serial: string) => {
         // Verifica se o número de série não está presente no banco de dados
 
         if (!DadosTeste.some(item => item.serial === serial.trim())) {
@@ -168,7 +168,7 @@ export default function Home() {
         justify="center"
         px={4}
       >        <Text fontSize='50px' color='#F0FFFF' borderBottom={'2px '}>
-          RadioSafecode checker
+          Radio Safecode checker
         </Text>
 
         <Box p={4} maxW={'600px'}>
@@ -177,15 +177,15 @@ export default function Home() {
           </Text>
           <Input type="file" onChange={handleFileChange} accept=".txt" mt={2} p={1} mb={2} />
         </Box>
-
-        <Stack direction='row' spacing={4} mb={30} align='center'>
-          <Button colorScheme='teal' variant='solid' onClick={handleUpload}>
+<Flex flexWrap={{ base: 'wrap', md: 'nowrap' }}>
+        <Stack direction={{ base: 'column', sm: 'row' }} spacing={4} mb={30} align='center'>
+          <Button width={'180px'} colorScheme='teal' variant='solid' onClick={handleUpload}>
             Gerar
           </Button>
-          <Button colorScheme='teal' variant='outline' onClick={handleDownloadPDF}>
+          <Button width={'180px'}  colorScheme='teal' variant='outline' onClick={handleDownloadPDF}>
             Download PDF
           </Button>
-          <Button colorScheme='teal' variant='outline' onClick={handleDownloadExcel}>
+          <Button width={'180px'} colorScheme='teal' variant='outline' onClick={handleDownloadExcel}>
             Download Planilha
           </Button>
 
@@ -195,7 +195,7 @@ export default function Home() {
             </Button>
           )}
         </Stack>
-
+        </Flex>
         {loading ? (
           <Flex justify="center" mt={4}>
             <Spinner />
