@@ -19,6 +19,6 @@ async function connectToDatabase(host, user, password, database) {
 }
 
 // Conectar aos bancos de dados Anchieta, Curitiba e Taubaté
-const anchientaConnection = await connectToDatabase('localhost', 'root', 'Fatima&Sueli2022**', 'Anchieta_radio');
+const anchientaConnection = await connectToDatabase('localhost', 'root', 'senha', 'Anchieta_radio');
 
 export default anchientaConnection;
