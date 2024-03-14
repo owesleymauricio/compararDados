@@ -11,7 +11,7 @@ export default async function handler(req, res) {
 
   // Lógica de manipulação do arquivo
   try {
-    const connection = await connectToDatabase('localhost', 'root', 'Fatima&Sueli2022**', 'Anchieta_radio');
+    const connection = await connectToDatabase('localhost', 'root', '', 'Anchieta_radio');
     const { fileContent } = req.body;
 
     // Execute as consultas no banco de dados
