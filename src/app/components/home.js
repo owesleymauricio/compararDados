@@ -1,10 +1,8 @@
-home:
-"use client"
+'use client'
 import { useState } from 'react';
 import { Flex, Stack, Text, Box, Input, Button, Spinner } from '@chakra-ui/react';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
-import HandleFiles from './handleFiles'
 
 export default function Home() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -30,7 +28,7 @@ export default function Home() {
       const fileContent = reader.result;
 
       try {
-        const response = await fetch(HandleFiles, {
+        const response = await fetch('/api/handleFiles', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -51,11 +49,10 @@ export default function Home() {
           console.error('Erro ao enviar o arquivo:', response.statusText);
           alert('Erro ao enviar o arquivo. Por favor, tente novamente.');
         }
-
-        setLoading(false);
       } catch (error) {
         console.error('Erro ao enviar o arquivo:', error);
         alert('Erro ao enviar o arquivo. Por favor, tente novamente.');
+      } finally {
         setLoading(false);
       }
     };
@@ -86,49 +83,51 @@ export default function Home() {
     XLSX.writeFile(wb, 'not_found_serials.xlsx');
   };
 
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  };
+
+  const showBackToTop = true;
+
   return (
-    <Flex
-    bg="black"
-    color="white"
-    flexDirection="column"
-    justify="center"
-    px={4}
-  >
-    <Text fontSize='50px' color='#F0FFFF' borderBottom={'2px '}>
-      RadioSafecode checker
-    </Text>
-
-    <Box p={4} maxW={'600px'}>
-      <Text fontSize="xl" mb={4}>
-        Selecione um arquivo .txt:
+    <Flex bg="black" color="white" flexDirection="column" justify="center" px={4}>
+      <Text fontSize='50px' color='#F0FFFF' borderBottom={'2px '}>
+        RadioSafecode checker
       </Text>
-      <Input type="file" onChange={handleFileChange} accept=".txt" mt={2} p={1} mb={2} />
-    </Box>
 
-    <Stack direction='row' spacing={4} mb={30} align='center'>
-      <Button colorScheme='teal' variant='solid' onClick={handleUpload}>
-        Gerar
-      </Button>
-      <Button colorScheme='teal' variant='outline' onClick={handleDownloadPDF}>
-        Download PDF
-      </Button>
-      <Button colorScheme='teal' variant='outline' onClick={handleDownloadExcel}>
-        Download Planilha
-      </Button>
-      {notFoundSerials.length > 0 && (
-        <Button colorScheme='red' variant='outline' onClick={clearNotFoundSerials}>
-          Limpar lista
+      <Box p={4} maxW={'600px'}>
+        <Text fontSize="xl" mb={4}>
+          Selecione um arquivo .txt:
+        </Text>
+        <Input type="file" onChange={handleFileChange} accept=".txt" mt={2} p={1} mb={2} />
+      </Box>
+
+      <Stack direction='row' spacing={4} mb={30} align='center'>
+        <Button colorScheme='teal' variant='solid' onClick={handleUpload}>
+          Gerar
         </Button>
-      )}
-    </Stack>
-
-    {loading ? (
-      <Flex justify="center" mt={4}>
-        <Spinner />
-      </Flex>
-    ) : (
-      <>
+        <Button colorScheme='teal' variant='outline' onClick={handleDownloadPDF}>
+          Download PDF
+        </Button>
+        <Button colorScheme='teal' variant='outline' onClick={handleDownloadExcel}>
+          Download Planilha
+        </Button>
         {notFoundSerials.length > 0 && (
+          <Button colorScheme='red' variant='outline' onClick={clearNotFoundSerials}>
+            Limpar lista
+          </Button>
+        )}
+      </Stack>
+
+      {loading ? (
+        <Flex justify="center" mt={4}>
+          <Spinner />
+        </Flex>
+      ) : (
+        <>          {notFoundSerials.length > 0 && (
           <Box mt={4} style={{ overflowX: 'auto' }}>
             <Text fontSize="lg">Números de série não encontrados:</Text>
             <ul>
@@ -143,9 +142,9 @@ export default function Home() {
             )}
           </Box>
         )}
-      </>
-    )}
-    {searchResult && <Text>{searchResult}</Text>}
-  </Flex>
+        </>
+      )}
+      {searchResult && <Text>{searchResult}</Text>}
+    </Flex>
   );
 }
