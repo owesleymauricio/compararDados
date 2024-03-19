@@ -1,9 +1,8 @@
+const connectToDatabase = require('./connection');
+const { quicksort } = require('./sortingAlgorithms');
+const { binarySearch } = require('./sortingAlgorithms');
 
-"use server"
-import connectToDatabase from '../connection'
-import { quicksort } from '../sortingAlgorithms';
-import { binarySearch } from '../sortingAlgorithms';
-export default async function handler(req, res) {
+async function handleFiles(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ message: 'Method Not Allowed' });
     return;
@@ -11,13 +10,15 @@ export default async function handler(req, res) {
 
   // Lógica de manipulação do arquivo
   try {
-    const connection = await connectToDatabase('localhost', 'root', '', 'Anchieta_radio');
+    const connectionA = await connectToDatabase('localhost', 'root', 'Fatima&Sueli2022**', 'Anchieta_radio');
+    const connectionT = await connectToDatabase('localhost', 'root', 'Fatima&Sueli2022**', 'Taubate_radio');
+    const connectionC = await connectToDatabase('localhost', 'root', 'Fatima&Sueli2022**', 'Curitiba_radio');
     const { fileContent } = req.body;
 
     // Execute as consultas no banco de dados
-    const [resultA] = await connection.query('SELECT * FROM radio_safecode');
-    const [resultT] = await connection.query('SELECT * FROM radio_safecode');
-    const [resultC] = await connection.query('SELECT * FROM radio_safecode');
+    const [resultA] = await connectionA.query('SELECT * FROM radio_safecode');
+    const [resultT] = await connectionT.query('SELECT * FROM radio_safecode');
+    const [resultC] = await connectionC.query('SELECT * FROM radio_safecode');
 
     // Ordenar os resultados das consultas
     const sortedResultA = quicksort(resultA, 0, resultA[0].length);
@@ -47,3 +48,5 @@ export default async function handler(req, res) {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 }
+
+module.exports = handleFiles;
