@@ -10,9 +10,9 @@ async function handleFiles(req, res) {
 
   // Lógica de manipulação do arquivo
   try {
-    const connectionA = await connectToDatabase('localhost', 'root', 'Fatima&Sueli2022**', 'Anchieta_radio');
-    const connectionT = await connectToDatabase('localhost', 'root', 'Fatima&Sueli2022**', 'Taubate_radio');
-    const connectionC = await connectToDatabase('localhost', 'root', 'Fatima&Sueli2022**', 'Curitiba_radio');
+    const connectionA = await connectToDatabase('localhost', 'root', 'password', 'Anchieta_radio');
+    const connectionT = await connectToDatabase('localhost', 'root', 'password', 'Taubate_radio');
+    const connectionC = await connectToDatabase('localhost', 'root', 'password', 'Curitiba_radio');
     const { fileContent } = req.body;
 
     // Execute as consultas no banco de dados
