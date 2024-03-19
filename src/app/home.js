@@ -14,28 +14,27 @@ export default function Home() {
     const file = event.target.files?.[0];
     setSelectedFile(file || null);
   };
-
   const handleUpload = async () => {
     if (!selectedFile) {
       alert("Nenhum arquivo selecionado.");
       return;
     }
-
+  
     setLoading(true);
-
+  
     const reader = new FileReader();
     reader.onload = async () => {
       const fileContent = reader.result;
-
+  
       try {
-        const response = await fetch('/api/handleFiles', {
+        const response = await fetch('./handleFiles.js', { // Altere a URL para a rota correta do servidor
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ fileContent }),
         });
-
+  
         if (response.ok) {
           const data = await response.json();
           if (data.message) {
@@ -47,7 +46,7 @@ export default function Home() {
           }
         } else {
           console.error('Erro ao enviar o arquivo:', response.statusText);
-          alert('Erro ao enviar o arquivo. Por favor, tente novamente.');
+          alert('Mensagem não ok');
         }
       } catch (error) {
         console.error('Erro ao enviar o arquivo:', error);
@@ -56,10 +55,10 @@ export default function Home() {
         setLoading(false);
       }
     };
-
+  
     reader.readAsText(selectedFile);
   };
-
+  
   const clearNotFoundSerials = () => {
     setNotFoundSerials([]);
   };
